@@ -1,5 +1,4 @@
 #include <iostream>
-#include <windows.h>
 #include <string>
 #include <limits>
 #include <cstdlib>
@@ -15,11 +14,6 @@ void searchElByKey(int* &arr, int &size);
 void printArray(int* arr, int size);
 
 int main() {
-    SetConsoleCP(65001);
-    SetConsoleOutputCP(65001);
-    //
-    // Встановлення розміру масиву
-    //
     cout << "\nВведіть розмір масиву від 1 до " << MAX_SIZE << ": ";
     int size;
     if (!(cin >> size) || (size <= 0 || size > MAX_SIZE))
@@ -87,7 +81,7 @@ int main() {
                 delete[] arr;
                 return 0;
                 break;
-                default:
+            default:
                 cout << "\nДії " << action << " не існує.";
         }
     }
@@ -212,6 +206,8 @@ void searchElByKey(int* &arr, int &size) {
         
         cerr << "\nВведено некоректне значення. Спробуйте від " 
             << -RAND_MAX / 2 << " до " << RAND_MAX / 2 << "\n";
+
+        return;
     }
 
     for (int i = 0; i < size; i++) {
