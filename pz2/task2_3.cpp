@@ -28,12 +28,12 @@ int main() {
     if (!(cin >> n)) return wrongInput();
     if (n <= 0) return invalidInput("рядків");
 
-    cout << "Введіть кількість рядків (m) матриці: ";
+    cout << "Введіть кількість стовпців (m) матриці: ";
     int m; // columns
     if (!(cin >> m)) return wrongInput();
     if (m <= 0) return invalidInput("стовпців");
 
-    int **matrix = createMatrix(n, m);
+    int** matrix = createMatrix(n, m);
     
     fillMatrix(matrix, n, m);
 
@@ -60,7 +60,7 @@ int wrongInput() {
  * @return Error code (1).
  */
 int invalidInput(char* word) {
-    cerr << "\nМатриця не може мати таку кількість "<< word <<".\n";
+    cerr << "\nМатриця не може мати таку кількість " << word << ".\n";
     cout << "Спробуйте ввести ціле позитивне число.\n";
     return 1;
 }
@@ -73,8 +73,8 @@ int invalidInput(char* word) {
  * @note Allocated memory should be deallocated using deleteMatrix().
  */
 int** createMatrix(int n, int m) {
-    int **matrix = new int *[n];
-    for (int i = 0; i < n; i++) matrix[i] = new int[m];
+    int** matrix = new int* [n]();
+    for (int i = 0; i < n; i++) matrix[i] = new int[m]();
     return matrix;
 }
 
@@ -121,7 +121,6 @@ void minEvenValueMainD(int** matrix, int n) {
         cout << "\nМінімальне парне число головної діагоналі: " 
             << minEl << "\n";
     } else { cout << "\nНа головній діагоналі немає парних чисел.\n"; }
-
 }
 
 /**
