@@ -12,6 +12,8 @@
 
 using namespace std;
 
+int wrongInput();
+int invalidInput(char* word);
 int** createMatrix(int n, int m);
 void fillMatrix(int** matrix, int n, int m);
 void minEvenValueMainD(int** matrix, int n);
@@ -20,31 +22,16 @@ void deleteMatrix(int** matrix, int n);
 
 int main() {
     system("cls");
+
     cout << "Введіть кількість рядків (n) матриці: ";
     int n; // rows
-    if (!(cin >> n)) {
-        cerr << "\nНеправильний ввід.\n";
-        cout << "Спробуйте ціле позитивне число.\n";
-        return 1;
-    }
-    if (n <= 0) {
-        cerr << "\nМатриця не може мати таку кількість рядків.\n";
-        cout << "Спробуйте ввести ціле позитивне число.\n";
-        return 1;
-    }
+    if (!(cin >> n)) return wrongInput();
+    if (n <= 0) return invalidInput("рядків");
 
     cout << "Введіть кількість рядків (m) матриці: ";
     int m; // columns
-    if (!(cin >> m)) {
-        cerr << "\nНеправильний ввід.\n";
-        cout << "Спробуйте ціле позитивне число.\n";
-        return 1;
-    }
-    if (m <= 0) {
-        cerr << "\nМатриця не може мати таку кількість стовпців.\n";
-        cout << "Спробуйте ввести ціле позитивне число.\n";
-        return 1;
-    }
+    if (!(cin >> m)) return wrongInput();
+    if (m <= 0) return invalidInput("стовпців");
 
     int **matrix = createMatrix(n, m);
     
@@ -56,6 +43,26 @@ int main() {
 
     deleteMatrix(matrix, n);
     return 0;
+}
+
+/**
+ * @brief Displays a message about error input.
+ * @return Error code (1).
+ */
+int wrongInput() {
+    cerr << "\nНеправильний ввід.\n";
+    cout << "Спробуйте ціле позитивне число.\n";
+    return 1;
+}
+
+/**
+ * @brief Displays a message about invalid input.
+ * @return Error code (1).
+ */
+int invalidInput(char* word) {
+    cerr << "\nМатриця не може мати таку кількість "<< word <<".\n";
+    cout << "Спробуйте ввести ціле позитивне число.\n";
+    return 1;
 }
 
 /**
@@ -117,6 +124,13 @@ void minEvenValueMainD(int** matrix, int n) {
 
 }
 
+/**
+ * @brief Printing the 2D array algorithm.
+ * @param matrix pointer to a 2D dynamic array of integers.
+ * @param n number of rows in the matrix.
+ * @param m number of columns in the matrix.
+ * @return Void.
+ */
 void printMatrix(int** matrix, int n, int m) {
     cout << "\n";
     for (int i = 0; i < n; i++) {
