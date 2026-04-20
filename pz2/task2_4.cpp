@@ -3,24 +3,15 @@
 // заповнити його випадковими числами і вивести на друк.
 // Завдання: додати елемент в початок масиву.
 //
-// Сформувати динамічний двовимірний масив,
-// заповнити його випадковими числами і вивести на друк.
-// Завдання: видалити рядок з номерок K.
-//
 // Для виділення пам'яті під масиви використовувати операцію new,
 // для видалення масивів з пам'яті – операцію delete.
 //
-// Для виділення пам'яті, заповнення масивів, видалення і додавання елементів
+// Для виділення пам'яті, заповнення масивів і додавання елементів
 // (рядків, стовпців) написати окремі функції.
 // У функції main() повинні бути розміщені тільки опис змінних
 // і звернення до відповідних функцій.
 //
 // Для реалізації інтерфейсу використовувати текстове меню.
-//
-// При видаленні елементів передбачити помилкові ситуації:
-// . видалення елементу з порожнього масиву
-// . кількість елементів, що видаляються > кількості наявних елементів.
-// У цьому випадку вивести повідомлення про помилку.
 // 
 #include <iostream>
 #include <string>
@@ -55,7 +46,7 @@ int main() {
                 break;
             case '2': fillOneDArray(arr);
                 break;
-            case '3': addElementToStart(arr);
+            case '3': addElementAtStart(arr);
                 break;
             case '4': printOneDArray(arr);
                 break;
@@ -67,6 +58,11 @@ int main() {
     } while (action != "5");
 }
 
+/**
+ * @brief Allocates memory for a one-dimensional dynamic array. User enters array size. 
+ * @return Pointer to the newly allocated 1D array of integers.
+ * @note Allocated memory should be deallocated using deleteOneDArray().
+ */
 int* createOneDArray() {
     while (true) {
         cout << "\nВведіть розмір масиву від 1 до " << MAX_SIZE << ": ";
@@ -82,6 +78,9 @@ int* createOneDArray() {
     return new int[size]();
 }
 
+/**
+ * @brief Display menu of possible actions.
+ */
 void textMenu() {
     cout << "\nМожливі дії:\n";
     cout << "1. Формування масиву.\n";
@@ -92,6 +91,11 @@ void textMenu() {
     cout << "\nВиберіть дію з масивом: ";
 }
 
+/**
+ * @brief Validates action input from the user.
+ * @param action user input in string via cin.
+ * @return Action number in char. First char in action.
+ */
 char actionCheck(std::string action) {
     while(true) {
         textMenu();
@@ -109,6 +113,14 @@ char actionCheck(std::string action) {
     }
 }
 
+/**
+ * @brief Fills the array with random integers from -RAND_MAX to RAND_MAX.
+ * @param &arr pointer link to a 1D dynamic array of integers.
+ * @return Void.
+ * @note Uses the Mersenne Twister (mt19937) algorithm for random number generation.
+ * https://en.wikipedia.org/wiki/Mersenne_Twister.
+ * @note The generator is static to ensure program performance by being created once during the first call.
+ */
 void fillOneDArray(int* &arr) {
     static std::mt19937 gen(std::random_device{}());
     std::uniform_int_distribution<> distrib(-RAND_MAX, RAND_MAX);
@@ -118,7 +130,13 @@ void fillOneDArray(int* &arr) {
     printOneDArray(arr);
 }
 
-void addElementToStart(int* &arr) {
+/**
+ * @brief Adds an integer number to the start of an array
+ * @param &arr pointer link to a 1D dynamic array of integers.
+ * @return Void.
+ * @note The number must be in [-RAND_MAX; RAND_MAX] range.
+ */
+void addElementAtStart(int* &arr) {
     cout << "Число повинно бути цілим в діапазоні від " 
         << -RAND_MAX << " до " << RAND_MAX << "\n";
     cout << "Введіть число, яке потрібно додати в початок масиву: ";
@@ -148,6 +166,11 @@ void addElementToStart(int* &arr) {
     std::clog << "\nЕлементи успішно додано.\n";
 }
 
+/**
+ * @brief Printing the one-dimensional array algorithm.
+ * @param arr pointer to a 1D dynamic array of integers.
+ * @return Void.
+ */
 void printOneDArray(int* arr) {
     if (size == 0) {
         cout << "\nМасив порожній.\n";
@@ -158,6 +181,11 @@ void printOneDArray(int* arr) {
     cout << "\n";
 }
 
+/**
+ * @brief Deallocates memory used by the 1D array.
+ * @param arr pointer link to a 2D dynamic array of integers.
+ * @param n number of rows in the matrix.
+ */
 void deleteOneDArray(int* &arr) {
     if (arr != nullptr) {
         delete[] arr;
