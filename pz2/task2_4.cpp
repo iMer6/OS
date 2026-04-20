@@ -23,7 +23,13 @@ using std::cout;
 using std::cin;
 using std::cerr;
 
+/**
+ * @brief Maximum array size. 
+ */
 const int MAX_SIZE = 100;
+/**
+ * @brief Currently array size.
+ */
 int size;
 
 int* createOneDArray();
@@ -183,8 +189,8 @@ void printOneDArray(int* arr) {
 
 /**
  * @brief Deallocates memory used by the 1D array.
- * @param arr pointer link to a 2D dynamic array of integers.
- * @param n number of rows in the matrix.
+ * @param arr pointer link to a 1D dynamic array of integers.
+ * @return Void.
  */
 void deleteOneDArray(int* &arr) {
     if (arr != nullptr) {
