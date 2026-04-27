@@ -44,12 +44,12 @@ int m;
 
 bool validN();
 bool validM();
-int wrongInput();
-int invalidInput(std::string word);
+void wrongInput();
+void invalidInput(std::string word);
 inline bool isArrayExist(int** arr);
 void textMenu();
 char actionCheck(std::string action);
-int** createTwoDArray(int n, int m);
+int** createTwoDArray(int** arr, int n, int m);
 void fillTwoDArray(int** array, int n, int m);
 void deleteRowByNumber(int** &arr, int &n);
 void printTwoDArray(int** arr, int n, int m);
@@ -69,7 +69,7 @@ int main() {
     std::string action;
     do {
         switch (actionCheck(action)) {
-            case '1': arr = createTwoDArray(n, m);
+            case '1': arr = createTwoDArray(arr, n, m);
                 break;
             case '2': fillTwoDArray(arr, n, m);
                 break;
@@ -129,22 +129,18 @@ bool validM() {
 
 /**
  * @brief Displays a message about error input.
- * @return Error code (1).
  */
-int wrongInput() {
+void wrongInput() {
     cerr << "\nНеправильний ввід.\n";
     cout << "Спробуйте ціле позитивне число.\n";
-    return 1;
 }
 
 /**
  * @brief Displays a message about invalid input.
- * @return Error code (1).
  */
-int invalidInput(std::string word) {
+void invalidInput(std::string word) {
     cerr << "\nМасив не може мати таку кількість " << word << ".\n";
     cout << "Спробуйте ввести ціле позитивне число.\n";
-    return 1;
 }
 
 /**
@@ -204,12 +200,12 @@ char actionCheck(std::string action) {
 int** createTwoDArray(int** arr, int n, int m) {
     if (isArrayExist(arr)) {
         cout << "Масив вже існує.\n";
-        return;
+        return arr;
     }
     
-    int** arr = new int* [n]();
-    for (int i = 0; i < n; i++) arr[i] = new int[m]();
-    return arr;
+    int** newArr = new int* [n]();
+    for (int i = 0; i < n; i++) newArr[i] = new int[m]();
+    return newArr;
 }
 
 /**
@@ -233,6 +229,7 @@ void fillTwoDArray(int** arr, int n, int m) {
             arr[i][j] = distrib(gen);
         }
     }
+    printTwoDArray(arr, n, m);
 }
 
 /**
@@ -253,8 +250,8 @@ void deleteRowByNumber(int** &arr, int &n) {
         cout << "Число повинно бути цілим від 1 до " << n << ".\n";
         return;
     }
-    delete[] arr[rowIndex - 1];
 
+    delete[] arr[rowIndex - 1];
     for (int i = rowIndex - 1; i < n - 1; i++) { arr[i] = arr[i + 1]; }
     n--;
 
