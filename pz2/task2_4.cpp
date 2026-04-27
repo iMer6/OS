@@ -137,7 +137,7 @@ void fillOneDArray(int* &arr) {
 }
 
 /**
- * @brief Adds an integer number to the start of an array
+ * @brief Adds an integer number to the start of an array.
  * @param &arr pointer link to a 1D dynamic array of integers.
  * @return Void.
  * @note The number must be in [-RAND_MAX; RAND_MAX] range.
