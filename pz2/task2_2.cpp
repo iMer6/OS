@@ -59,27 +59,26 @@ void fillArray(int* arr) {
 }
 
 int* uniqueElements(int* arr) {
-    if (arr) {
+    if (!arr) {
         cout << "\nПослідовності не існує.\n";
-        return;
+        return nullptr;
     }
     if (isEmpty()) {
         cout << "\nПослідовність порожня.\n";
-        return;
+        return arr;
     }
 
     int uniqueCount = 0;
     for (int i = 0; i < size; i++) {
         int count = 0;
-
         for (int j = 0; j < size; j++) {
-            if (arr[i] == arr[j]) { count++; }
+            if (arr[i] == arr[j]) count++;
         }
-        if (count == 1) { arr[uniqueCount++] = arr[i]; }
+        if (count == 1) arr[uniqueCount++] = arr[i];
     }
 
     int* newArr = new int[uniqueCount]();
-    for (int i = 0; i < uniqueCount; i++) { newArr[i] = arr[i]; }
+    for (int i = 0; i < uniqueCount; i++) newArr[i] = arr[i];
     size = uniqueCount;
 
     return newArr;
@@ -91,7 +90,7 @@ int* uniqueElements(int* arr) {
  * @return Void.
  */
 void printArray(int* arr) {
-    if (arr) {
+    if (!arr) {
         cout << "\nПослідовності не існує.\n";
         return;
     }
@@ -100,7 +99,7 @@ void printArray(int* arr) {
         return;
     }
     cout << "\n";
-    for (int i = 0; i < size; i++) { cout << arr[i] << " "; }
+    for (int i = 0; i < size; i++) cout << arr[i] << " ";
     cout << "\n";
 }
 
