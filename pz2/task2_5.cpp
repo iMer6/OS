@@ -60,11 +60,10 @@ int main() {
 
     // Removing every even words in text. 
     txt = "";
-    for (size_t i = 1; i < wordCount; i += 2) txt += words[i] + " ";
+    for (size_t i = 0; i < wordCount; i += 2) txt += words[i] + " ";
     
-    // Output the result.
-    cout << "\n";
-    for (char ch : txt) cout << ch;
+    // Output of the result.
+    cout << "\n" << txt;
 
     delete[] words;
     words = nullptr;
@@ -74,8 +73,8 @@ int main() {
 /**
  * @brief Construst and return a new string.
  * @param str entry string.
- * @param startIndex index of first character in string (default 0). Must be in [0, string length).
- * @param n number of characters in substring (default remainder). Must be in [0, string length - startIndex].
+ * @param startIndex index of first character in string. Must be in [0, string length).
+ * @param n number of characters in substring. Must be in [0, remainder].
  * @return The new string.
  * @note Parameter startIndex optional. Default value is 0 (str start).
  * @note Parameter n optional. Default value is remainder.
