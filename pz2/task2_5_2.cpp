@@ -9,7 +9,6 @@
     Знайти довжину string.
 */
 #include <iostream>
-#include <iomanip>
 #include <cstdlib> // system("cls")
 #include <limits> // numeric_limits
 
