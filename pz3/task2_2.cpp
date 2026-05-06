@@ -176,13 +176,11 @@ void reverseEvenRowsInArray(int** arr, size_t n, size_t m) {
     if (!isArrayExist(arr)) return;
     
     for (size_t i = 1; i < n; i += 2) {
-        int* newRow = new int[m]();
-        for (int newRowIndex = 0, j = m - 1; j >= 0; j--) {
-            newRow[newRowIndex++] = arr[i][j];
+        for (size_t j = 0; j < m / 2; j++) {
+            int temp = arr[i][j];
+            arr[i][j] = arr[i][m - 1 - j];
+            arr[i][m - 1 - j] = temp;
         }
-        delete[] arr[i];
-        arr[i] = newRow;
-        newRow = nullptr;
     }
     return;
 }
