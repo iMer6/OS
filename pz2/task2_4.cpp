@@ -36,7 +36,7 @@ int* createOneDArray();
 void textMenu();
 char actionCheck(std::string action);
 void fillOneDArray(int* &arr);
-void addElementToStart(int* &arr);
+void addElementAtStart(int* &arr);
 void printOneDArray(int* arr);
 void deleteOneDArray(int* &arr);
 
