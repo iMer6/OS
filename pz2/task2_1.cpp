@@ -7,15 +7,15 @@ using namespace std;
 
 const int MAX_SIZE = 100;
 
-void deleteMinElement(int* &arr, int &size);
-void addElements(int* &arr, int &size);
-void swapElements(int* &arr, int size);
-void searchElByKey(int* &arr, int &size);
-void printArray(int* arr, int size);
+void deleteMinElement(int arr[], int &size);
+void addElements(int arr[], int &size);
+void swapElements(int arr[], int size);
+void searchElByKey(int arr[], int &size);
+void printArray(int arr[], int size);
 
 int main() {
     cout << "\nВведіть розмір масиву від 1 до " << MAX_SIZE << ": ";
-    int size;
+    int size = 0;
     if (!(cin >> size) || (size <= 0 || size > MAX_SIZE))
     {
         cin.clear();
@@ -24,12 +24,12 @@ int main() {
         cerr << "\nВведено некоректне значення для розміру масиву.\n";
         return 1;
     }
-    int *arr = new int[size];
+    int arr[MAX_SIZE];
     //
     // Заповнення масиву псевдо-випадковими числами
     //
     for (int i = 0; i < size; i++) {
-        *(arr + i) = rand() - RAND_MAX / 2;
+        arr[i] = rand() - RAND_MAX / 2;
     }
     //
     // Основний цикл
@@ -78,7 +78,6 @@ int main() {
                 printArray(arr, size);
                 break;
             case '6':
-                delete[] arr;
                 return 0;
                 break;
             default:
@@ -87,26 +86,26 @@ int main() {
     }
 }
 
-void deleteMinElement(int* &arr, int &size) {
+void deleteMinElement(int arr[], int &size) {
     if (size == 0) {
         cout << "\nМасив порожній, немає елементів для видалення.\n";
         return;
     }
     int minIndex = 0;
     for (int i = 1; i < size; i++) {
-        if (*(arr + i) < *(arr + minIndex)) { minIndex = i; }
+        if (arr[i] < arr[minIndex]) { minIndex = i; }
     }
-    int minEl = *(arr + minIndex);
+    int minEl = arr[minIndex];
     //
     // Зсув елементів після видаленого
     //
-    for (int i = minIndex; i < size - 1; i++) { *(arr + i) = *(arr + i + 1); }
+    for (int i = minIndex; i < size - 1; i++) { arr[i] = arr[i + 1]; }
     size--;
 
     cout << "\nЕлемент " << minEl << " було видалено.\n";
 }
 
-void addElements(int* &arr, int &size) {
+void addElements(int arr[], int &size) {
     //
     // Введення кількості елементів та позиції K
     //
@@ -141,18 +140,18 @@ void addElements(int* &arr, int &size) {
     // Додавання псевдо-випадкових елементів елементів
     //
     int newSize = size + n;
-    int *tempArr = new int[newSize];
+    int tempArr[newSize];
 
     for (int i = 0, j = 0; i < newSize; i++) {
-        if (i < k) { *(tempArr + i) = *(arr + j++);
+        if (i < k) { tempArr[i] = arr[j++];
         }
         else if (i == k) {
             for (int ii = k; ii < k + n; ii++) { 
-                *(tempArr + ii) = rand() - RAND_MAX / 2;
+                tempArr[ii] = rand() - RAND_MAX / 2;
             }
             i += n - 1;
         }
-        else { *(tempArr + i) = *(arr + j++); }
+        else { tempArr[i] = arr[j++]; }
     }
     //
     // Прохід по тимчасовому масиву (tempArr) для додавання в нього значень зі старого масиву (arr).
@@ -167,14 +166,13 @@ void addElements(int* &arr, int &size) {
     //
     // Зміна посилань (перепризначення вказівника)
     //
-    delete[] arr;
     arr = tempArr;
     size = newSize;
 
     clog << "\nЕлементи успішно додано.\n";
 }
 
-void swapElements(int* &arr, int size) {
+void swapElements(int arr[], int size) {
     if (size == 0) {
         cout << "\nМасив порожній. Переставляти нічого.\n";
         return;
@@ -183,15 +181,15 @@ void swapElements(int* &arr, int size) {
     // XOR swap
     //
     for (int i = 0; i < size - 1; i += 2) {
-        *(arr + i) ^= *(arr + i + 1);
-        *(arr + i + 1) ^= *(arr + i);
-        *(arr + i) ^= *(arr + i + 1);
+        arr[i] ^= arr[i + 1];
+        arr[i + 1] ^= arr[i];
+        arr[i] ^= arr[i + 1];
     }
 
     cout << "\nПарні і непарні елементи масиву було змінено місцями.\n";
 }
 
-void searchElByKey(int* &arr, int &size) {
+void searchElByKey(int arr[], int &size) {
     if (size == 0) {
         cout << "\nМасив порожній. Знайти елемент не можна.\n";
         return;
@@ -211,7 +209,7 @@ void searchElByKey(int* &arr, int &size) {
     }
 
     for (int i = 0; i < size; i++) {
-        if (*(arr + i) == key) {
+        if (arr[i] == key) {
             cout << "\nЕлемент " << key << " знайдено на позиції " << i << ".\n";
             cout << "Виконано порівнянь: " << i + 1 << "\n";
             return;
@@ -221,12 +219,12 @@ void searchElByKey(int* &arr, int &size) {
     cout << "Виконано порівнянь: " << size << "\n";
 }
 
-void printArray(int* arr, int size) {
+void printArray(int arr[], int size) {
     if (size == 0) {
         cout << "\nМасив порожній.\n";
         return;
     }
     cout << "\n";
-    for (int i = 0; i < size; i++) { cout << *(arr + i) << " "; }
+    for (int i = 0; i < size; i++) { cout << arr[i] << " "; }
     cout << "\n";
 }
