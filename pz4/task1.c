@@ -1,0 +1,202 @@
+/*
+1. Використовуючи введення-виведення в стилі C створити файл 
+та записати в нього структуровані дані.
+2. Вивести створений файл на екран.
+3. Видалити з файлу дані відповідно до варіанта.
+4. Додати в файл дані відповідно до варіанта.
+5. Вивести змінений файл на екран.
+
+6. Використовуючи введення-виведення в стилі C++ створити файл 
+та записати в нього структуровані дані.
+7. Вивести створений файл на екран.
+8. Видалити з файлу дані відповідно до варіанта.
+9. Додати в файл дані відповідно до варіанта.
+10. Вивести змінений файл на екран.
+
+Структура даних "DVD-диск":
+• назва фільма;
+• режисер;
+• тривалість;
+• ціна.
+
+Видалення: видалити всі елементи з ціною вище заданої.
+Додавання: додати елемент з номером K.
+
+1. Описати структури.
+2. Відкрити файл для запису елементу.
+3. Організувати інтерфейс для внесення значень полів елементів.
+4. Організувати пошук.
+5. Організувати інтерфейс виведення результату запита.
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+const unsigned int MAX_FILM_NAME = 100;
+const unsigned int MAX_DIRECTOR_LENGTH = 30;
+const unsigned int MAX_DURATION = 300;
+const unsigned int MAX_PRICE = 10000;
+
+typedef struct {
+    char film_name[MAX_FILM_NAME + 1]; // '\0'
+    char director[MAX_DIRECTOR_LENGTH + 1]; // '\0'
+    unsigned int duration;
+    unsigned int price;
+} DVD_disk;
+
+DVD_disk makeDVD();
+void clearBuffer();
+DVD_disk readDVD(const char*);
+int countDVDs(const char*);
+int readAllDVDs(const char*, DVD_disk[], int);
+void addDVD(DVD_disk);
+void printDVD(DVD_disk);
+
+int main() {
+    const char* FILENAME = "t.txt";
+    const int DVDsCOUNT = countDVDs(FILENAME);
+    // DVD_disk dvd = makeDVD();
+
+    // addDVD(dvd);
+
+    // DVD_disk dvds[] = {
+    //     {"Inception", "Christopher Nolan", 148, 880},
+    //     {"The Matrix", "Lana & Lilly Wachowski", 136, 870},
+    //     {"Se7en", "David Fincher", 127, 860},
+    //     {"Back to the Future", "Robert Zemeckis", 116, 850},
+    //     {"Alien", "Ridley Scott", 117, 850}
+    // };
+    // for (int i = 0; i < 5; i++) addDVD(dvds[i]);
+
+    DVD_disk dvds[DVDsCOUNT];
+    int readedDisks = readAllDVDs(FILENAME, dvds, DVDsCOUNT);
+
+    for (int i = 0; i < readedDisks; i++) {
+        printf("%i.\n", i + 1);
+        printDVD(dvds[i]);
+    }
+    return 0;
+}
+
+DVD_disk makeDVD() {
+    DVD_disk dvd;
+    printf("Назва фільму: ");
+    while(fgets(dvd.film_name, sizeof(dvd.film_name), stdin) == NULL) {
+        printf("\nПомилка! Введіть до %u символів: ", MAX_FILM_NAME);
+        clearerr(stdin);
+        clearBuffer();
+    }
+    dvd.film_name[strcspn(dvd.film_name, "\n")] = '\0';
+
+    printf("Режисер: ");
+    while (fgets(dvd.director, sizeof(dvd.director), stdin) == NULL
+           || strlen(dvd.director) == 0
+           || strlen(dvd.director) > MAX_DIRECTOR_LENGTH) {
+        fprintf(stderr, "\nПомилка! Введіть до %u символів: ", MAX_DIRECTOR_LENGTH);
+        clearerr(stdin);
+        clearBuffer();
+    }
+    dvd.director[strcspn(dvd.director, "\n")] = '\0';
+
+    printf("Тривалість (хв): ");
+    while (scanf("%u", &dvd.duration) != 1 || dvd.duration == 0 || dvd.duration > MAX_DURATION) {
+        fprintf(stderr, "\nПомилка! Введіть ціле число від 1 до %u: ", MAX_DURATION);
+        clearerr(stdin);
+        clearBuffer();
+    }
+    clearBuffer();
+
+    printf("Ціна: ");
+    while (scanf("%u", &dvd.price) != 1 || dvd.price > MAX_PRICE) {
+        fprintf(stderr, "\nПомилка! Введіть число від 1 до %u: ", MAX_PRICE);
+        clearerr(stdin);
+        clearBuffer();
+    }
+    clearBuffer();
+
+    return dvd;
+}
+
+void clearBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+DVD_disk readDVD(const char* filename) {
+    DVD_disk dvd = {"", "", 0, 0};
+    
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Помилка! Перевірте, чи існує файл %s!\n", filename);
+        return dvd;
+    }
+
+    int parsed = fscanf(fp, "%[^;];%[^;];%u;%u\n", 
+                        dvd.film_name, dvd.director, &dvd.duration, &dvd.price);
+
+    // fscanf returns count of successfully read items (should be 4)
+    if (parsed != 4) {
+        fprintf(stderr, "Помилка! Некоректний формат даних у файлі!\n");
+    }
+
+    fclose(fp);
+    return dvd;
+}
+
+int countDVDs(const char* filename) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) return 0;
+
+    int count = 0;
+    int ch;
+
+    while ((ch = fgetc(fp)) != EOF) {
+        if (ch == '\n') count++;
+    }
+
+    fclose(fp);
+    return count;
+}
+
+int readAllDVDs(const char* filename, DVD_disk dvds[], int max_size) {
+    FILE* fp = fopen(filename, "r");
+
+    if (fp == NULL) {
+        fprintf(stderr, "\nПомилка! Перевірте, чи існує файл %s!\n", filename);
+        return 0;
+    }
+
+    int count = 0;
+
+    while (count < max_size &&
+        fscanf(fp, "%[^;];%[^;];%u;%u\n",
+            dvds[count].film_name,
+            dvds[count].director,
+            &dvds[count].duration,
+            &dvds[count].price
+        )
+    ) count++;
+
+    fclose(fp);
+    return count;
+}
+
+void addDVD(DVD_disk dvd) {
+    FILE *fp = fopen("t.txt", "a");
+    
+    if (fp == NULL) {
+        fprintf(stderr, "\nПомилка відкриття файлу для запису!\n");
+        return;
+    }
+
+    // fprintf(fp, "Фільм: %s.\nРежисер: %s.\nТривалість: %u.\nЦіна: %u грн.\n",
+    //         dvd.film_name, dvd.director, dvd.duration, dvd.price);
+    fprintf(fp, "%s;%s;%u;%u\n", dvd.film_name, dvd.director, dvd.duration, dvd.price);
+    
+    fclose(fp);
+}
+
+void printDVD(DVD_disk dvd) {
+    printf("Фільм: %s.\nРежисер: %s.\nТривалість: %u.\nЦіна: %u грн.\n",
+           dvd.film_name, dvd.director, dvd.duration, dvd.price);
+}
