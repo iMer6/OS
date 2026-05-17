@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char* FILENAME = "t.txt";
 const unsigned int MAX_FILM_NAME = 100;
 const unsigned int MAX_DIRECTOR_LENGTH = 30;
 const unsigned int MAX_DURATION = 300;
@@ -46,35 +47,37 @@ typedef struct {
 
 DVD_disk makeDVD();
 void clearBuffer();
-DVD_disk readDVD(const char*);
-int countDVDs(const char*);
-int readAllDVDs(const char*, DVD_disk[], int);
+DVD_disk readDVD();
+int countDVDs();
+int readAllDVDs(DVD_disk[], int);
 void addDVD(DVD_disk);
-void printDVD(DVD_disk);
+void printHeader();
+void printRow(const DVD_disk);
+void printFooter();
 
 int main() {
-    const char* FILENAME = "t.txt";
-    const int DVDsCOUNT = countDVDs(FILENAME);
-    // DVD_disk dvd = makeDVD();
-
-    // addDVD(dvd);
-
     // DVD_disk dvds[] = {
     //     {"Inception", "Christopher Nolan", 148, 880},
     //     {"The Matrix", "Lana & Lilly Wachowski", 136, 870},
     //     {"Se7en", "David Fincher", 127, 860},
     //     {"Back to the Future", "Robert Zemeckis", 116, 850},
-    //     {"Alien", "Ridley Scott", 117, 850}
+    //     {"Alien", "Ridley Scott", 117, 850},
+    //     {"The Fast and the Furious", "Rob Cohen", 106, 680},
+    //     {"Now You See Me 2", "Jon M. Chu", 129, 640}
     // };
-    // for (int i = 0; i < 5; i++) addDVD(dvds[i]);
+    // size_t length = sizeof(dvds) / sizeof(dvds[0]);
+    // for (size_t i = 0; i < length; i++) addDVD(dvds[i]);
 
-    DVD_disk dvds[DVDsCOUNT];
-    int readedDisks = readAllDVDs(FILENAME, dvds, DVDsCOUNT);
+    DVD_disk dvds[countDVDs()];
+    
+    int readedDisks = readAllDVDs(dvds, countDVDs());
 
+    printHeader();
     for (int i = 0; i < readedDisks; i++) {
-        printf("%i.\n", i + 1);
-        printDVD(dvds[i]);
+        // printf("%i.\n", i + 1);
+        printRow(dvds[i]);
     }
+    printFooter();
     return 0;
 }
 
@@ -122,12 +125,12 @@ void clearBuffer() {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-DVD_disk readDVD(const char* filename) {
+DVD_disk readDVD() {
     DVD_disk dvd = {"", "", 0, 0};
     
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = fopen(FILENAME, "r");
     if (fp == NULL) {
-        fprintf(stderr, "Помилка! Перевірте, чи існує файл %s!\n", filename);
+        fprintf(stderr, "Помилка! Перевірте, чи існує файл %s!\n", FILENAME);
         return dvd;
     }
 
@@ -143,8 +146,8 @@ DVD_disk readDVD(const char* filename) {
     return dvd;
 }
 
-int countDVDs(const char* filename) {
-    FILE *fp = fopen(filename, "r");
+int countDVDs() {
+    FILE *fp = fopen(FILENAME, "r");
     if (fp == NULL) return 0;
 
     int count = 0;
@@ -158,11 +161,11 @@ int countDVDs(const char* filename) {
     return count;
 }
 
-int readAllDVDs(const char* filename, DVD_disk dvds[], int max_size) {
-    FILE* fp = fopen(filename, "r");
+int readAllDVDs(DVD_disk dvds[], int max_size) {
+    FILE* fp = fopen(FILENAME, "r");
 
     if (fp == NULL) {
-        fprintf(stderr, "\nПомилка! Перевірте, чи існує файл %s!\n", filename);
+        fprintf(stderr, "\nПомилка! Перевірте, чи існує файл %s!\n", FILENAME);
         return 0;
     }
 
@@ -182,7 +185,7 @@ int readAllDVDs(const char* filename, DVD_disk dvds[], int max_size) {
 }
 
 void addDVD(DVD_disk dvd) {
-    FILE *fp = fopen("t.txt", "a");
+    FILE *fp = fopen(FILENAME, "a");
     
     if (fp == NULL) {
         fprintf(stderr, "\nПомилка відкриття файлу для запису!\n");
@@ -196,7 +199,17 @@ void addDVD(DVD_disk dvd) {
     fclose(fp);
 }
 
-void printDVD(DVD_disk dvd) {
-    printf("Фільм: %s.\nРежисер: %s.\nТривалість: %u.\nЦіна: %u грн.\n",
+static void printHeader() {
+    printf("\n+------------------------------------------+--------------------------------+------------+-----------+\n");
+    printf("| %-51s | %-37s | %-10s | %-13s |\n", "Назва фільму", "Режисер", "Тривалість", "Ціна");
+    printf("+------------------------------------------+--------------------------------+------------+-----------+\n");
+}
+
+static void printRow(const DVD_disk dvd) {
+    printf("| %-40.40s | %-30.30s | %-7u хв | %-5u грн |\n", 
            dvd.film_name, dvd.director, dvd.duration, dvd.price);
+}
+
+static void printFooter() {
+    printf("+------------------------------------------+--------------------------------+------------+-----------+\n\n");
 }
