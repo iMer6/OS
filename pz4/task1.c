@@ -84,7 +84,7 @@ int main() {
 
     unsigned int price = 0;
     printf("Введіть ціну: ");
-    while (scanf("%u", &price) != 1 || price > MAX_PRICE) {
+    while (scanf("%u", &price) != 1 || price == 0 || price > MAX_PRICE) {
         fprintf(stderr, "\nПомилка! Введіть число від 1 до %u: ", MAX_PRICE);
         clearerr(stdin);
         clearBuffer();
@@ -94,24 +94,43 @@ int main() {
     system("cls");
     
     DVD_disk newDVD = makeDVD();
-    addDVD(newDVD);
 
-    DVDsCount = readAllDVDs(dvds, countDVDs());
-    
-    size_t newDVDsCount = 0;
+    unsigned int k = 0;
+    printf("Введіть номер, куди потрібно вставити новий диск: ");
+    while (scanf("%u", &k) != 1 || k == 0 || k > DVDsCount + 1) {
+        fprintf(stderr, "\nПомилка! Введіть число від 1 до %zu: ", DVDsCount + 1);
+        clearerr(stdin);
+        clearBuffer();
+    }
+    clearBuffer();
+
+    k--;
+
+    DVD_disk newDVDs[DVDsCount + 1];
+
+    for (size_t i = 0; i < k; i++) newDVDs[i] = dvds[i];
+    newDVDs[k] = newDVD;
+    for (size_t i = k; i < DVDsCount; i++) newDVDs[i + 1] = dvds[i];
+
+    DVDsCount++;
+
+    size_t filteredCount = 0;
     for (size_t i = 0; i < DVDsCount; i++) {
-        if (dvds[i].price <= price) newDVDsCount++;
+        if (newDVDs[i].price <= price) filteredCount++;
     }
 
-    DVD_disk newDVDs[newDVDsCount];
+    DVD_disk filteredDVDs[filteredCount];
     for (size_t i = 0, j = 0; i < DVDsCount; i++) {
-        if (dvds[i].price <= price) newDVDs[j++] = dvds[i];
+        if (newDVDs[i].price <= price) {
+            filteredDVDs[j++] = newDVDs[i];
+        }
     }
 
-    writeDVDs(newDVDs, newDVDsCount);
+    writeDVDs(filteredDVDs, filteredCount);
 
+    system("cls");
     printHeader();
-    for (size_t i = 0; i < newDVDsCount; i++) printRow(newDVDs[i]);
+    for (size_t i = 0; i < filteredCount; i++) printRow(filteredDVDs[i]);
     printFooter();
 
     return 0;
