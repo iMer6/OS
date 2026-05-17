@@ -48,8 +48,8 @@ typedef struct {
 DVD_disk makeDVD();
 void clearBuffer();
 DVD_disk readDVD();
-int countDVDs();
-int readAllDVDs(DVD_disk[], int);
+size_t countDVDs();
+size_t readAllDVDs(DVD_disk[], const size_t);
 void addDVD(DVD_disk);
 void printHeader();
 void printRow(const DVD_disk);
@@ -146,11 +146,11 @@ DVD_disk readDVD() {
     return dvd;
 }
 
-int countDVDs() {
+size_t countDVDs() {
     FILE *fp = fopen(FILENAME, "r");
     if (fp == NULL) return 0;
 
-    int count = 0;
+    size_t count = 0;
     int ch;
 
     while ((ch = fgetc(fp)) != EOF) {
@@ -161,7 +161,7 @@ int countDVDs() {
     return count;
 }
 
-int readAllDVDs(DVD_disk dvds[], int max_size) {
+size_t readAllDVDs(DVD_disk dvds[], const size_t MAX_SIZE) {
     FILE* fp = fopen(FILENAME, "r");
 
     if (fp == NULL) {
@@ -169,9 +169,9 @@ int readAllDVDs(DVD_disk dvds[], int max_size) {
         return 0;
     }
 
-    int count = 0;
+    size_t count = 0;
 
-    while (count < max_size &&
+    while (count < MAX_SIZE &&
         fscanf(fp, "%[^;];%[^;];%u;%u\n",
             dvds[count].film_name,
             dvds[count].director,
