@@ -150,15 +150,19 @@ DVD_disk makeDVD() {
     while (fgets(dvd.director, sizeof(dvd.director), stdin) == NULL
            || strlen(dvd.director) == 0
            || strlen(dvd.director) > MAX_DIRECTOR_LENGTH) {
-        fprintf(stderr, "\nПомилка! Введіть до %u символів: ", MAX_DIRECTOR_LENGTH);
+        fprintf(stderr, "\nПомилка! Введіть до %u символів: ", 
+            MAX_DIRECTOR_LENGTH);
         clearerr(stdin);
         clearBuffer();
     }
     dvd.director[strcspn(dvd.director, "\n")] = '\0';
 
     printf("Тривалість (хв): ");
-    while (scanf("%u", &dvd.duration) != 1 || dvd.duration == 0 || dvd.duration > MAX_DURATION) {
-        fprintf(stderr, "\nПомилка! Введіть ціле число від 1 до %u: ", MAX_DURATION);
+    while (scanf("%u", &dvd.duration) != 1 
+            || dvd.duration == 0
+            || dvd.duration > MAX_DURATION) {
+        fprintf(stderr, "\nПомилка! Введіть ціле число від 1 до %u: ",
+            MAX_DURATION);
         clearerr(stdin);
         clearBuffer();
     }
@@ -249,7 +253,11 @@ void addDVD(DVD_disk dvd) {
 
     // fprintf(fp, "Фільм: %s.\nРежисер: %s.\nТривалість: %u.\nЦіна: %u грн.\n",
     //         dvd.film_name, dvd.director, dvd.duration, dvd.price);
-    fprintf(fp, "%s;%s;%u;%u\n", dvd.film_name, dvd.director, dvd.duration, dvd.price);
+    fprintf(fp, "%s;%s;%u;%u\n",
+        dvd.film_name,
+        dvd.director,
+        dvd.duration,
+        dvd.price);
     
     fclose(fp);
 }
