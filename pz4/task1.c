@@ -51,33 +51,69 @@ DVD_disk readDVD();
 size_t countDVDs();
 size_t readAllDVDs(DVD_disk[], const size_t);
 void addDVD(DVD_disk);
-void printHeader();
-void printRow(const DVD_disk);
-void printFooter();
+void writeDVDs(DVD_disk[], size_t);
+static void printHeader();
+static void printRow(const DVD_disk);
+static void printFooter();
 
 int main() {
-    // DVD_disk dvds[] = {
-    //     {"Inception", "Christopher Nolan", 148, 880},
-    //     {"The Matrix", "Lana & Lilly Wachowski", 136, 870},
-    //     {"Se7en", "David Fincher", 127, 860},
-    //     {"Back to the Future", "Robert Zemeckis", 116, 850},
-    //     {"Alien", "Ridley Scott", 117, 850},
-    //     {"The Fast and the Furious", "Rob Cohen", 106, 680},
-    //     {"Now You See Me 2", "Jon M. Chu", 129, 640}
-    // };
-    // size_t length = sizeof(dvds) / sizeof(dvds[0]);
-    // for (size_t i = 0; i < length; i++) addDVD(dvds[i]);
+    DVD_disk data[] = {
+        {"Avatar", "James Cameron", 162, 1234},
+        {"Inception", "Christopher Nolan", 148, 880},
+        {"The Matrix", "Lana & Lilly Wachowski", 136, 870},
+        {"Se7en", "David Fincher", 127, 860},
+        {"Back to the Future", "Robert Zemeckis", 116, 850},
+        {"Alien", "Ridley Scott", 117, 850},
+        {"The Fast and the Furious", "Rob Cohen", 106, 680},
+        {"Now You See Me 2", "Jon M. Chu", 129, 640}
+    };
+    size_t length = sizeof(data) / sizeof(data[0]);
+    for (size_t i = 0; i < length; i++) addDVD(data[i]);
 
     DVD_disk dvds[countDVDs()];
     
-    int readedDisks = readAllDVDs(dvds, countDVDs());
+    size_t DVDsCount = readAllDVDs(dvds, countDVDs());
 
     printHeader();
-    for (int i = 0; i < readedDisks; i++) {
-        // printf("%i.\n", i + 1);
-        printRow(dvds[i]);
-    }
+    for (size_t i = 0; i < DVDsCount; i++) printRow(dvds[i]);
     printFooter();
+
+    printf("Натисніть Enter...");
+    getchar();
+    system("cls");
+
+    unsigned int price = 0;
+    printf("Введіть ціну: ");
+    while (scanf("%u", &price) != 1 || price > MAX_PRICE) {
+        fprintf(stderr, "\nПомилка! Введіть число від 1 до %u: ", MAX_PRICE);
+        clearerr(stdin);
+        clearBuffer();
+    }
+    clearBuffer();
+
+    system("cls");
+    
+    DVD_disk newDVD = makeDVD();
+    addDVD(newDVD);
+
+    DVDsCount = readAllDVDs(dvds, countDVDs());
+    
+    size_t newDVDsCount = 0;
+    for (size_t i = 0; i < DVDsCount; i++) {
+        if (dvds[i].price <= price) newDVDsCount++;
+    }
+
+    DVD_disk newDVDs[newDVDsCount];
+    for (size_t i = 0, j = 0; i < DVDsCount; i++) {
+        if (dvds[i].price <= price) newDVDs[j++] = dvds[i];
+    }
+
+    writeDVDs(newDVDs, newDVDsCount);
+
+    printHeader();
+    for (size_t i = 0; i < newDVDsCount; i++) printRow(newDVDs[i]);
+    printFooter();
+
     return 0;
 }
 
@@ -196,6 +232,25 @@ void addDVD(DVD_disk dvd) {
     //         dvd.film_name, dvd.director, dvd.duration, dvd.price);
     fprintf(fp, "%s;%s;%u;%u\n", dvd.film_name, dvd.director, dvd.duration, dvd.price);
     
+    fclose(fp);
+}
+
+void writeDVDs(DVD_disk dvds[], size_t dvdsCount) {
+    FILE *fp = fopen(FILENAME, "w");
+    
+    if (fp == NULL) {
+        fprintf(stderr, "\nПомилка відкриття файлу для запису!\n");
+        return;
+    }
+    
+    for (size_t i = 0; i < dvdsCount; i++) {
+        fprintf(fp, "%s;%s;%u;%u\n",
+            dvds[i].film_name,
+            dvds[i].director,
+            dvds[i].duration,
+            dvds[i].price
+        );
+    }
     fclose(fp);
 }
 
