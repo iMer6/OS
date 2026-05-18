@@ -1,3 +1,5 @@
 .vscode/
 *.exe
 pz4/t.txt
+pz5/ASCII.txt
+pz5/Unicode.txt
