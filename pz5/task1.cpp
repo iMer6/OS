@@ -45,8 +45,9 @@ int CompareDirectories(const char* path1, const char* path2) {
     if (len2 > 0 && buf2[len2 - 1] == '\\') buf2[len2 - 1] = '\0';
     
     // _stricmp – case-insensitive comparison
-    if (_stricmp(buf1, buf2) == 0) return 1; // Equal
-    return 0; // Not equal
+    // 1 – equal
+    // 0 – not equal
+    return !_stricmp(buf1, buf2);
 }
 
 void printResult(const char* path1, const char* path2, int res) {
