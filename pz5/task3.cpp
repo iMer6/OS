@@ -3,8 +3,10 @@
 Тип кодування невідомий.
 */
 #include <iostream>
+#include <cstdlib>
 #include <fstream>
-#include <tchar.h>
+#include <cstring>
+#include <cwchar>
 
 using std::cout;
 
@@ -12,16 +14,24 @@ const char* FILENAME = "UnknownEncoding.txt";
 const size_t MAX_COUNT = 10; // max number of rows
 const size_t MAX_LENGTH = 100; // max length of row
 
+#define UNICODE ;
+
+bool isASCII() {
+    #ifdef UNICODE
+        return false;
+    #else
+        return true;
+    #endif
+}
+
 /**
- * @brief Ascending order sort
+ * @brief Ascending ASCII sort
  */
-void SortStrings(TCHAR* arr[], size_t count) {
+void SortStringsASCII(char* arr[], size_t count) {
     for (size_t i = 0; i < count - 1; i++) {
         for (size_t j = 0; j < count - i - 1; j++) {
-            // ASCII – strcmp
-            // Unicode – wcscmp
-            if (_tcscmp(arr[j], arr[j + 1]) > 0) {
-                TCHAR* temp = arr[j];
+            if (strcmp(arr[j], arr[j + 1]) > 0) {
+                char* temp = arr[j];
                 arr[j] = arr[j + 1];
                 arr[j + 1] = temp;
             }
@@ -29,42 +39,88 @@ void SortStrings(TCHAR* arr[], size_t count) {
     }
 }
 
+/**
+ * @brief Ascending Unicode sort
+ */
+void SortStringsUnicode(wchar_t* arr[], size_t count) {
+    for (size_t i = 0; i < count - 1; i++) {
+        for (size_t j = 0; j < count - i - 1; j++) {
+            if (wcscmp(arr[j], arr[j + 1]) > 0) {
+                wchar_t* temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+int ASCIISort();
+int UnicodeSort();
+
 int main() {
-    TCHAR textBuf[MAX_COUNT][MAX_LENGTH];
+    if (isASCII()) return ASCIISort();
+    else return UnicodeSort();
+}
 
-    TCHAR* ptrs[MAX_COUNT];
-    for (size_t i = 0; i < MAX_COUNT; i++) ptrs[i] = textBuf[i];
-
-    // ifstream works with char (ASCII) characters.
-    // wifstream works with wchar_t (Unicode) characters.
-    // ASCII: TCHAR – char, basic_ifstream<TCHAR> – basic_ifstream<char> == ifstream
-    // Unicode: TCHAR – wchar_t, basic_ifstream<TCHAR> – basic_ifstream<wchar_t> == 
-    std::basic_ifstream<TCHAR> fl(FILENAME);
-    if (!fl.is_open()) {
-        _tprintf(_TEXT("Помилка: Не вдалося відкрити файл %s\n"), FILENAME);
+int ASCIISort() {
+    std::ifstream aFile(FILENAME, std::ios::in);
+    if (!aFile.is_open()) {
+        std::cerr << "Не вдалося відкрити файл ASCII.txt\n";
         return 1;
     }
 
-    // Numbers of readed lines
-    size_t actualCount = 0;
+    char aBuf[MAX_COUNT][MAX_LENGTH];
+    char* aPointers[MAX_COUNT];
+    size_t aCount = 0;
 
-    while (actualCount < MAX_COUNT && fl.getline(ptrs[actualCount], MAX_LENGTH)) {
-        if (_tcslen(ptrs[actualCount]) > 0) actualCount++;
+    while (aCount < MAX_COUNT && aFile.getline(aBuf[aCount], MAX_LENGTH)) {
+        aPointers[aCount] = aBuf[aCount];
+        aCount++;
     }
-    fl.close();
+    aFile.close();
 
-    if (actualCount == 0) {
-        _tprintf(_TEXT("Помилка: Файл порожній або не містить даних.\n"));
+    cout << "ASCII список з файлу:\n";
+    for (size_t i = 0; i < aCount; i++) cout << aPointers[i] << "\n";
+
+    SortStringsASCII(aPointers, aCount);
+
+    cout << "\nВідсортований ASCII список:\n";
+    for (size_t i = 0; i < aCount; i++) cout << aPointers[i] << "\n";
+
+    return 0;
+}
+
+int UnicodeSort() {
+    std::ifstream uFile(FILENAME);
+    if (!uFile.is_open()) {
+        std::cerr << "Не вдалося відкрити файл unicode.txt\n";
         return 1;
     }
-    fl.close();
 
-    cout << "Рядки з файлу:\n";
-    for (size_t i = 0; i < MAX_COUNT; i++) _tprintf(_TEXT("%s\n"), ptrs[i]);
+    wchar_t uBuf[MAX_COUNT][MAX_LENGTH];
+    wchar_t* uPointers[MAX_COUNT];
+    size_t uCount = 0;
 
-    SortStrings(ptrs, actualCount);
+    char tempCharBuf[MAX_LENGTH];
 
-    cout << "Відсортовані рядки:\n";
-    for (size_t i = 0; i < MAX_COUNT; i++) _tprintf(_TEXT("%s\n"), ptrs[i]);
+    while (uCount < MAX_COUNT && uFile.getline(tempCharBuf, MAX_LENGTH)) {
+        // File UTF-8 (Unicode) –> tempCharBuf –> mbstowcs() –> uBuf
+        // Sequence of multibyte characters –> Array of wide characters (wchar_t)
+        // MultiByte String TO Wide Character String
+        mbstowcs(uBuf[uCount], tempCharBuf, MAX_LENGTH);
+        
+        uPointers[uCount] = uBuf[uCount];
+        uCount++;
+    }
+    uFile.close();
+
+    cout << "Unicode список з файлу:\n";
+    for (size_t i = 0; i < uCount; i++) std::wcout << uPointers[i] << "\n";
+
+    SortStringsUnicode(uPointers, uCount);
+
+    cout << "\nВідсортований Unicode список:\n";
+    for (size_t i = 0; i < uCount; i++) std::wcout << uPointers[i] << "\n";
+
     return 0;
 }
