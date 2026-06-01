@@ -85,9 +85,10 @@ constexpr size_t MAX_PIB_LENGTH = 100;
 
 // File reverse on static arrays
 void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
-    // Open file in binary mode to read bytes
+    // Open file in text mode ("rt") to read bytes
     // Universal _tfopen works everywhere
-    FILE* inFile = _tfopen(inputPath, _T("rb"));
+    // Windows automatically replace \r\n with \n
+    FILE* inFile = _tfopen(inputPath, _T("rt"));
     if (inFile == NULL) {
         wcout << L"Помилка: Не вдалося відкрити вхiдний файл!\n";
         return;
@@ -100,7 +101,8 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
     size_t bytesRead = fread(
         staticBuffer, // data storage location
         1, // size of each object (bytes)
-        MAX_FILE_SIZE, // the number of the objects to be read
+        MAX_FILE_SIZE - 2, // the number of the objects to be read
+            // -2 for two bytes \0
         inFile // input file stream to read from (where to read)
     );
     fclose(inFile);
@@ -110,6 +112,11 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
         return;
     }
 
+    // \0 for correct work of IsTextUnicode
+    // Wide \0 (L'\0') consists of 2 bytes (0x00 0x00)
+    staticBuffer[bytesRead] = '\0'; // first byte
+    staticBuffer[bytesRead + 1] = '\0'; // second byte
+
     // Whether a buffer contains Unicode text
     bool isUnicode = IsTextUnicode(
         staticBuffer, // pointer to the input buffer to examine
@@ -117,7 +124,9 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
         nullptr // use all available tests to evaluate the buffer
     );
 
-    FILE* outFile = _tfopen(outputPath, _T("wb"));
+    // Open file in text mode ("wt") to write bytes
+    // Windows automatically replace \n back to \r\n
+    FILE* outFile = _tfopen(outputPath, _T("wt"));
     if (outFile == NULL) return;
 
     if (isUnicode) {
@@ -125,6 +134,7 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
 
         // Static buffer as wchar_t array (step by 2 bytes)
         wchar_t* wData = reinterpret_cast<wchar_t*>(staticBuffer);
+        // In text mode, the number of characters is counted from the bytes actually read.
         size_t wCharsCount = bytesRead / sizeof(wchar_t);
 
         // Process BOM marker if it is at the beginning of file
@@ -146,9 +156,9 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
 
         // Write the result in a file
         fwrite(
-            wData, // pointer to the first object in the array to be written
-            1, // size of each object (bytes)
-            bytesRead, // the number of the objects to be written
+            wData + startIdx, // pointer to the first object in the array to be written
+            sizeof(wchar_t), // size of each object (bytes)
+            wCharsCount - startIdx, // the number of the objects to be written
             outFile // output file stream to write to (where to write)
         );
     } else {
