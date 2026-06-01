@@ -60,23 +60,22 @@
 Для роботи з файлом можна використовувати довільні засоби роботи з файлами в C++,
 які треба вивчити самостійно.
 */
-#define UNICODE
-#define _UNICODE
+
+// pch.h – Visual Stiduo internal technology
+// g++ by default doesn't know what pch.h it is 
+// #include "pch.h"
 
 
 #include <iostream>
-#include <tchar.h>   // generic types and macros
-#include <locale.h>  // localize console
+#include <tchar.h> // generic types and macros  
+#include <locale.h> // localize console
 #include <windows.h> // IsTextUnicode, MultiByteToWideChar, MessageBox
 // #include <winbase.h> // IsTextUnicode (include windows.h)
 // #include <stringapiset.h> // MultiByteToWideChar (include windows.h)
 // #include <winuser.h> // MessageBox (include windows.h)
 #include <cstdlib> // qsort
-#include <algorithm> // std::reverse
-#include <cstdio>    // fopen, fread, fwrite
-
-#include <fcntl.h>
-#include <io.h>
+#include <algorithm> // std::sort, std::reverse
+#include <cstdio> // fopen, fread, fwrite
 
 using std::cout;
 using std::wcout;
@@ -94,11 +93,16 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
         return;
     }
 
-    // Create a static array (buffer) for reading file
+    // Static array (buffer) for reading file
     char staticBuffer[MAX_FILE_SIZE];
-    
+
     // Read data in a static array
-    size_t bytesRead = fread(staticBuffer, 1, MAX_FILE_SIZE, inFile);
+    size_t bytesRead = fread(
+        staticBuffer, // data storage location
+        1, // size of each object (bytes)
+        MAX_FILE_SIZE, // the number of the objects to be read
+        inFile // input file stream to read from (where to read)
+    );
     fclose(inFile);
 
     if (bytesRead == 0) {
@@ -106,146 +110,127 @@ void ReverseAnyFile(const TCHAR* inputPath, const TCHAR* outputPath) {
         return;
     }
 
-    // Guess whether a buffer contains Unicode text
+    // Whether a buffer contains Unicode text
     bool isUnicode = IsTextUnicode(
         staticBuffer, // pointer to the input buffer to examine
         static_cast<int>(bytesRead), // size of the input buffer (bytes)
-        NULL // result is not stored
+        nullptr // use all available tests to evaluate the buffer
     );
 
     FILE* outFile = _tfopen(outputPath, _T("wb"));
     if (outFile == NULL) return;
 
     if (isUnicode) {
-        cout << "Тип кодування файлу: Unicode\n";
-        
+        wcout << L"Тип кодування файлу: Unicode\n";
+
         // Static buffer as wchar_t array (step by 2 bytes)
         wchar_t* wData = reinterpret_cast<wchar_t*>(staticBuffer);
         size_t wCharsCount = bytesRead / sizeof(wchar_t);
 
-        // Process BOM marker (0xFEFF) if it is at the beginning of file
-        // BOM = Byte Order Mark
+        // Process BOM marker if it is at the beginning of file
+        // BOM – Byte Order Mark
         size_t startIdx = 0;
-        if (wCharsCount > 0 && wData[0] == 0xFEFF) {
-            wchar_t bom = 0xFEFF;
-            fwrite(&bom, sizeof(wchar_t), 1, outFile);
+        const wchar_t BOM = 0xFEFF;
+        if (wData != nullptr && wCharsCount > 0 && wData[0] == BOM) {
+            fwrite(
+                &BOM, // pointer to the data to be written
+                sizeof(wchar_t), // size of each object (bytes)
+                1, // the number of the objects to be written
+                outFile // output file stream to write to (where to write)
+            );
             startIdx = 1; // skip BOM when reversing
         }
 
         // Manually reverse elements of a static wchar_t array
         std::reverse(wData + startIdx, wData + wCharsCount);
-        
-        // Write result in file
-        fwrite(wData, 1, bytesRead, outFile);
-    }
-    else {
+
+        // Write the result in a file
+        fwrite(
+            wData, // pointer to the first object in the array to be written
+            1, // size of each object (bytes)
+            bytesRead, // the number of the objects to be written
+            outFile // output file stream to write to (where to write)
+        );
+    } else {
         wcout << L"Тип кодування файлу: ASCII\n";
-        
-        size_t i = 0;
-        while (i < bytesRead) {
-            // Find start of line
-            while (i < bytesRead
-                && (staticBuffer[i] == '\r' || staticBuffer[i] == '\n')
-            ) i++;
-            
-            if (i >= bytesRead) break;
+        // Reverse all array of bytes
+        std::reverse(staticBuffer, staticBuffer + bytesRead);
 
-            size_t startIdx = i;
-
-            // Find end of line
-            while (i < bytesRead
-                && staticBuffer[i] != '\r'
-                && staticBuffer[i] != '\n'
-            ) i++;
-            size_t endIdx = i;
-
-            // If the line is non-empty, reverse only its text
-            if (endIdx > startIdx) {
-                std::reverse(staticBuffer + startIdx, staticBuffer + endIdx);
-                
-                fwrite(staticBuffer + startIdx, 1, endIdx - startIdx, outFile);
-                fwrite("\r\n", 1, 2, outFile);
-            }
-        }
+        // Write the result in a file
+        fwrite(staticBuffer, 1, bytesRead, outFile);
     }
     fclose(outFile);
     wcout << L"Реверс файлу успiшно завершено!\n";
 }
 
 int main() {
+    // Set console output encoding for UTF-8 (for Ciryllic)
     SetConsoleOutputCP(65001);
     _wsetlocale(LC_ALL, L".65001");
     
-    // Check default enconding type (TCHAR)
+    // Check default encoding type (TCHAR)
     _tprintf(_T("Розмiр типу TCHAR у байтах: %d\n"), (int)sizeof(TCHAR));
-    #ifdef _UNICODE
+#ifdef UNICODE
     _tprintf(_T("Режим: UNICODE (wchar_t)\n\n"));
-    // TCHAR –> wchar_t (2 bytes)
-    // _tprintf –> wprintf
-    #else
+    // TCHAR ==> wchar_t (2 bytes)
+    // _tprintf ==> wprintf 
+#else
     _tprintf(_T("Режим: ASCII (char)\n\n"));
-    // TCHAR –> char (1 byte)
-    // _tprintf –> printf
-    #endif
+    // TCHAR ==> char (1 byte)
+    // _tprintf ==> printf
+#endif
 
-    fflush(stdout);
-    
-    _tprintf(_T("ASCII:\n"));
-    
     // Full name in ASCII (char)
     constexpr size_t COUNT = 2;
     const char* pibASCII[COUNT] = {
-        "Iванов Степан Iванович",
-        "Iванов Iван Iванович"
+        "Мерщанський Олег Сергiйович",
+        "Мерщанський Iгор Сергiйович"
     };
 
+    cout << "ASCII array:\n";
     for (size_t i = 0; i < COUNT; i++) {
         cout << "[" << i << "]: " << pibASCII[i] << "\n";
-    } 
+    }
 
     // Convert string to Unicode using MultiByteToWideChar
     _tprintf(_T("\nПереведення в Unicode та виведення 3 способами\n"));
-    
-    // Create two static 2D arrays of wchar_t
-    TCHAR pibUnicode[COUNT][MAX_PIB_LENGTH];
-    TCHAR* pibPointers[COUNT]; // array of pointers required for qsort to work
+
+    // Two static 2D arrays of wchar_t
+    wchar_t pibUnicode[COUNT][MAX_PIB_LENGTH];
+    wchar_t* pibPointers[COUNT]; // array of pointers required for qsort to work
 
     for (size_t i = 0; i < COUNT; i++) {
         // Convert data directly into a static array
         MultiByteToWideChar(
             CP_UTF8, // UTF-8
-            0, // without additional checks. "Broken" byte –> default character
+            0, // without additional checks. "Broken" byte ==> default character
             pibASCII[i], // pointer to the character string to convert
             -1, // size (bytes) of the input string (pibASCII[i]). -1 – entire input string
-            (LPWSTR)(pibUnicode[i]), // pointer to a buffer that receives the result
-            MAX_PIB_LENGTH // Size (characters) of the buffer (pibUnicode[i])
+            pibUnicode[i], // pointer to a buffer that receives the result
+            MAX_PIB_LENGTH // size (characters) of the buffer (pibUnicode[i])
         );
         pibPointers[i] = pibUnicode[i]; // pointer to the start of the string
     }
-
-    TCHAR* oldLocale = _tsetlocale(LC_ALL, NULL); // current locale
-    _tsetlocale(LC_ALL, _T("")); // system locale
-
+    
     // 3 output methods
-    // function _tprintf
+    // 1: function _tprintf
     _tprintf(_T("_tprintf:\n"));
     for (unsigned int i = 0; i < COUNT; i++) {
-        _tprintf(_T("[%u]: %ls\n"), i, pibPointers[i]);
+        _tprintf(_T("[%u]: %ls\n"), i, pibPointers[i]); // %ls for explicit output wchar_t
     }
 
-    if (oldLocale != NULL) _tsetlocale(LC_ALL, oldLocale);
-  
-    // stream wcout
+    // 2: stream wcout
     wcout << L"wcout:\n";
     for (unsigned int i = 0; i < COUNT; i++) {
         wcout << L"[" << i << L"]: " << pibPointers[i] << L"\n";
     }
 
-    // function MessageBox (Windows graphic window)
+    // 3: MessageBox (Windows graphic window)
+    // Always working with Unicode regardless of the project
     for (size_t i = 0; i < COUNT; i++) {
         MessageBoxW(
-            NULL, // the massage box has no owner window
-            (LPCWSTR)pibPointers[i], // the message to be displayed
+            NULL, // the message box has no owner window
+            pibPointers[i], // the message to be displayed
             L"MessageBox", // dialog box title
             MB_OK // the message box contains one push button OK. Default
         );
@@ -256,33 +241,41 @@ int main() {
     qsort(
         pibPointers, // pointer to the array to sort
         COUNT, // number of elements in the array
-        sizeof(wchar_t*), // size of each el in the array (bytes)
+        sizeof(wchar_t*), // size of each element in the array (bytes)
         [](const void* a, const void* b) -> int {
             // Double cast to sort an array of pointers to wchar_t
             return wcscmp(*(const wchar_t**)a, *(const wchar_t**)b);
         } // comparison lambda-function (sorting Unicode strings)
 
-        // [](const void* a, const void b) – callback function
+        // [](const void* a, const void* b) – callback function
     );
-    
+
     wcout << L"Відсортований масив (qsort):\n";
     for (size_t i = 0; i < COUNT; i++) {
         wcout << L"[" << i << L"]: " << pibPointers[i] << L"\n";
     }
 
-    // Convert Unicode –> ANSI (ASCII)
+    // Варіант Б (для найвищої оцінки): за допомогою шаблонної std::sort
+    std::sort(pibPointers, pibPointers + COUNT, [](const wchar_t* a, const wchar_t* b) {
+        return wcscmp(a, b) < 0;
+    });
+    wcout << L"Вiдсортовано через std::sort:\n";
+    for (size_t i = 0; i < COUNT; i++) wcout << L"[" << i << L"]: " << pibPointers[i] << L"\n";
+
+    // Convert Unicode ==> ANSI (ASCII)
     _tprintf(_T("\nЗворотне перетворення в ASCII\n"));
     char resASCII[COUNT][MAX_PIB_LENGTH]; // static array for result
     for (size_t i = 0; i < COUNT; i++) {
         WideCharToMultiByte(
             CP_UTF8, // UTF-8
-            0,
-            (LPCWCH)pibPointers[i],
-            -1,
-            resASCII[i],
-            MAX_PIB_LENGTH,
-            NULL,
-            NULL
+            0, // flag indicating the UTF-8 conversion type
+            pibPointers[i], // pointer to the Unicode string to convert (where to read)
+            -1, // size of the string indicated by pibPointers[i] (characters).
+                // -1 – the entire input string, including the \0 char
+            resASCII[i], // pointer to a buffer that receives the converted string (where to write)
+            MAX_PIB_LENGTH, // size of the buffer indicated by resASCII[i] (bytes)
+            NULL, // default char for a broken char. Must be NULL for UTF-8
+            NULL // flag: was the default char used? Must be NULL for UTF-8
         );
         cout << "[" << i << "]: " << resASCII[i] << "\n";
     }
