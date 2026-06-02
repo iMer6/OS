@@ -1,13 +1,31 @@
 #include <iostream>
 #include "rsa.h"
+#include <random>
 
 using std::cerr;
 using std::cout;
 
+bool isPrime(uint64_t n) {
+    if (n <= 1) return false;
+    if (n <= 3) return true;
+    if (n % 2 == 0 || n % 3 == 0) return false;
+    for (uint64_t i = 5; i * i <= n; i += 6) {
+        if (n % i == 0 || n % (i + 2) == 0) return false;
+    }
+    return true;
+}
+
 int main() {
-    // Prime numbers (to 2^32 - 1)
-    uint64_t p0 = 61;
-    uint64_t q0 = 53;
+    static std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<uint64_t> distr(100, 1000); 
+
+    uint64_t p0, q0;
+
+    do { p0 = distr(gen); }
+    while (!isPrime(p0));
+
+    do { q0 = distr(gen); }
+    while (!isPrime(q0) || q0 == p0);
     
     uint64_t d0;
     uint64_t e0;
@@ -20,8 +38,13 @@ int main() {
     }
     cout << "Pait 1: e0=" << e0 << ", d0=" << d0 << ", n0=" << n0 << "\n";
 
-    uint64_t p1 = 79;
-    uint64_t q1 = 71;
+    uint64_t p1, q1;
+
+    do { p1 = distr(gen); }
+    while (!isPrime(p1));
+
+    do { q1 = distr(gen); }
+    while (!isPrime(q1) || q1 == p1);
 
     uint64_t d1;
     uint64_t e1;
