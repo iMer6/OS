@@ -97,13 +97,15 @@ bool VerifyIntegrity(HMODULE hModule) {
 
     // Oped file via WinAPI
     HANDLE hFile = CreateFileW(
-        filePath,
-        GENERIC_READ,
-        FILE_SHARE_READ,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL
+        filePath, // file path
+        GENERIC_READ, // file opening mode (read)
+        FILE_SHARE_READ, // sharing mode (read)
+            // Other processes can read the file at the same time
+        NULL, // the handle cannot be inherited (default)
+        OPEN_EXISTING, // opens the file only if it exists
+            // If the file doesn't exist ==> error
+        FILE_ATTRIBUTE_NORMAL, // the file has no other attributes
+        NULL // don't ignore parameter 6 (FILE_ATTRIBUTE_NORMAL)
     );
     if (hFile == INVALID_HANDLE_VALUE) return false;
 
@@ -120,16 +122,29 @@ bool VerifyIntegrity(HMODULE hModule) {
 
     DWORD bytesRead;
     unsigned int savedChecksum = 0;
-    SetFilePointer(hFile, dataSize, NULL, FILE_BEGIN);
-    ReadFile(
-        hFile,
-        &savedChecksum,
-        sizeof(savedChecksum),
-        &bytesRead,
-        NULL
+    SetFilePointer(
+        hFile, // file handle (where need to change position)
+        dataSize, // how many bytes the pointer needs to be moved?
+        NULL, // required for files > 4 GB
+            // NULL – 64-bit shift is not needed
+        FILE_BEGIN // countdown starts from the beginning of the file
     );
 
-    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+    ReadFile(
+        hFile, // where to read data from?
+        &savedChecksum, // where to write the read data?
+        sizeof(savedChecksum), // buffer size (how many bytes need to be read)
+        &bytesRead, // where to record the number of characters read?
+        NULL // synchronous mode
+    );
+
+    SetFilePointer(
+        hFile, // file handle (where need to change position)
+        0, // how many bytes the pointer needs to be moved?
+        NULL, // required for files > 4 GB
+            // NULL – 64-bit shift is not needed
+        FILE_BEGIN // countdown starts from the beginning of the file
+    );
     unsigned int calculatedChecksum = 0;
 
     const DWORD BUFFER_SIZE = 1024;
@@ -143,11 +158,11 @@ bool VerifyIntegrity(HMODULE hModule) {
         
         if (
             !ReadFile(
-                hFile,
-                buffer,
-                toRead,
-                &bytesRead,
-                NULL
+                hFile, // where to read data from?
+                buffer, // where to write the read data?
+                toRead, // buffer size (how many bytes need to be read?)
+                &bytesRead, // where to record the number of characters read?
+                NULL // synchronous mode
             )
             || bytesRead == 0
         ) {
@@ -184,6 +199,7 @@ BOOL APIENTRY DllMain(
     switch (reason) {
         case DLL_PROCESS_ATTACH: {
             char msg[128];
+            // Writes formatted data to an ANSI string buffer
             wsprintfA(msg, "DLLMain ATTACH. lpReserver = %p (%s)\n",
                 lpReserved,
                 (lpReserved == NULL

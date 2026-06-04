@@ -65,11 +65,11 @@ void DemonstrateResourceDLL() {
             buffer[len] = L'\n';
             DWORD written;
             WriteConsoleW(
-                hConsole,
-                buffer,
-                len + 1,
-                &written,
-                NULL
+                hConsole, // a handle to the console screen buffer.
+                buffer, // where do need to print from?
+                len + 1, // the size of string (characters)
+                &written, // where to write how many characters were read?
+                NULL // reserved. Must be NULL
             );
         } else {
             cerr << "Error: string ID " << id << " not found. Code: "
