@@ -1,0 +1,10 @@
+#pragma code_page(65001)
+#include "resource.h"
+
+STRINGTABLE
+BEGIN
+    IDS_SURNAME "Surname: Mershchanskyi"
+    IDS_FACULTY "Faculty: Computer Science"
+    IDS_GROUP "Group: PZPI-24-6"
+    IDS_DISCIPLINE "Discipline: Operating Systems"
+END

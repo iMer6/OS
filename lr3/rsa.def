@@ -1,0 +1,7 @@
+LIBRARY rsa
+EXPORTS
+    modularPow
+    generateKeys
+    encryptRSA
+    decryptRSA
+    verifyLibraryIntegrity
