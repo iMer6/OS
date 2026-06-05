@@ -7,6 +7,7 @@ LPVOID AllocateBestFit(SIZE_T size) {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
 
+    // Windows requires virtual memory allocations to be aligned (64 KiB)
     SIZE_T granularity = si.dwAllocationGranularity;
 
     MEMORY_BASIC_INFORMATION mbi;
@@ -18,19 +19,25 @@ LPVOID AllocateBestFit(SIZE_T size) {
     // Scan memory and look for the smallest sufficient block
     while (addr < si.lpMaximumApplicationAddress) {
         if (VirtualQuery(addr, &mbi, sizeof(mbi)) != sizeof(mbi))
-            break;
+            break; // unmapped region
         
-        // Block must be free and its size must be sufficient
-        if (mbi.State == MEM_FREE) { 
+        // Block must be free
+        if (mbi.State == MEM_FREE) {
             ULONG_PTR rawAddr = (ULONG_PTR)mbi.BaseAddress;
+
+            // Align the base address upward to be nearest allocation
+            // granularity boundary
             ULONG_PTR alignedAddr = (rawAddr + granularity - 1) & ~(granularity - 1);
             
+            // How many bytes are lost due to alignment? 
             SIZE_T alignmentWaste = alignedAddr - rawAddr;
             
+            // Could the total region size fit the requested size + alignment
             if (mbi.RegionSize >= size + alignmentWaste) {
                 SIZE_T usableSize = mbi.RegionSize - alignmentWaste;
-                SIZE_T excess = usableSize - size; // unused memory
+                SIZE_T excess = usableSize - size; // unused memory in block
                 
+                // Found block with the minimum excess memory
                 if (excess < minExcess) {
                     minExcess = excess;
                     bestFitAddress = (LPVOID)alignedAddr;
@@ -38,12 +45,11 @@ LPVOID AllocateBestFit(SIZE_T size) {
             }
             
         }
-        // Next region
+        // Move to the start of the next region
         addr = (unsigned char*)mbi.BaseAddress + mbi.RegionSize;
     }
 
     // Best block found
-    // Allocate memory at the block's address
     if (bestFitAddress != NULL) {
         LPVOID allocated = VirtualAlloc(
             bestFitAddress,
