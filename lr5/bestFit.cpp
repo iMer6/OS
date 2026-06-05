@@ -1,24 +1,19 @@
 #include <iostream>
 #include <windows.h>
-#include <vector>
 
 using std::cout;
-
-// Info about best block found
-struct BestBlock {
-    LPVOID baseAddress;
-    SIZE_T size;
-};
 
 LPVOID AllocateBestFit(SIZE_T size) {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
 
+    SIZE_T granularity = si.dwAllocationGranularity;
+
     MEMORY_BASIC_INFORMATION mbi;
     unsigned char* addr = (unsigned char*)si.lpMinimumApplicationAddress;
     
     LPVOID bestFitAddress = NULL;
-    int minExcess = INT_MAX;
+    SIZE_T minExcess = SIZE_MAX;
     
     // Scan memory and look for the smallest sufficient block
     while (addr < si.lpMaximumApplicationAddress) {
@@ -26,27 +21,43 @@ LPVOID AllocateBestFit(SIZE_T size) {
             break;
         
         // Block must be free and its size must be sufficient
-        if (mbi.State == MEM_FREE && mbi.RegionSize >= size) { 
-            int excess = mbi.RegionSize - size; // unused memory
-            if (excess < minExcess) {
-                minExcess = excess;
-                bestFitAddress = mbi.BaseAddress;
+        if (mbi.State == MEM_FREE) { 
+            ULONG_PTR rawAddr = (ULONG_PTR)mbi.BaseAddress;
+            ULONG_PTR alignedAddr = (rawAddr + granularity - 1) & ~(granularity - 1);
+            
+            SIZE_T alignmentWaste = alignedAddr - rawAddr;
+            
+            if (mbi.RegionSize >= size + alignmentWaste) {
+                SIZE_T usableSize = mbi.RegionSize - alignmentWaste;
+                SIZE_T excess = usableSize - size; // unused memory
+                
+                if (excess < minExcess) {
+                    minExcess = excess;
+                    bestFitAddress = (LPVOID)alignedAddr;
+                }
             }
+            
         }
+        // Next region
         addr = (unsigned char*)mbi.BaseAddress + mbi.RegionSize;
     }
 
     // Best block found
     // Allocate memory at the block's address
     if (bestFitAddress != NULL) {
-        return VirtualAlloc(
+        LPVOID allocated = VirtualAlloc(
             bestFitAddress,
             size,
             MEM_RESERVE | MEM_COMMIT,
             PAGE_READWRITE
         );
+
+        if (allocated == NULL)
+            cout << "VirtualAlloc failed. Error code: "
+                 << GetLastError() << "\n";
+        return allocated;
     }
-    return NULL; // best block not found
+    return NULL; 
 }
 
 BOOL FreeBestFit(LPVOID lpAddress) {
@@ -65,13 +76,12 @@ int main() {
     if (memory != NULL) {
         cout << "Memory allocated at address: " << memory << "\n";
         
-        cout << (
-            FreeBestFit(memory)
-                ? "Successful memory deallocation"
-                : "Failed to deallocate memory"
-            ) << "\n";
+        if (FreeBestFit(memory))
+            cout << "Successful memory deallocation\n";
+        else
+            cout << "Failed to deallocate memory. Error: " << GetLastError() << "\n";
     } else {
-        cout << "No sufficient free block not found\n";
+        cout << "No sufficient free block found or allocation failed\n";
     }
 
     return 0;
