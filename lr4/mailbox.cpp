@@ -49,19 +49,20 @@ private:
         BYTE buffer[MAX_BOX_BUFFER] = { 0 };
         
         SetFilePointer(
-            hFile,
-            0,
-            NULL,
-            FILE_BEGIN
+            hFile, // file handle (where need to change position?)
+            0, // how many bytes the pointer needs to be moved?
+            NULL, // required for files > 4Gb
+                  // NULL – 64-bit shift is not needed 
+            FILE_BEGIN // countdown starts from the beginning of the file
         );
         DWORD bytesRead;
         ReadFile(
-            hFile,
-            buffer,
-            fileSize,
-            &bytesRead,
-            NULL
-        ); 
+            hFile, // where to read data from?
+            buffer, // where to write the read data?
+            fileSize, // buffer size (how many bytes needs to be read?)
+            &bytesRead, // where to record the number of characters read?
+            NULL // synchronous mode
+        );
 
         // Reset the CRC field before counting
         MailboxHeader* header = reinterpret_cast<MailboxHeader*>(buffer);
