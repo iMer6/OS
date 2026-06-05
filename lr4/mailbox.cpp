@@ -12,7 +12,7 @@ struct MailboxHeader {
     DWORD message_count;
     DWORD total_size;
     DWORD max_size;
-    DWORD crc32; // контроль цілісності (CRC32)
+    DWORD crc32; // Cyclic Redundancy Check
 };
 
 struct MessageHeader {
@@ -24,40 +24,71 @@ private:
     string folder_name;
     string file_path;
 
-    // Алгоритм CRC32 для контролю цілісності за допомогою статичного масиву 
     DWORD CalculateCRC32(const BYTE* data, DWORD length) {
-        DWORD crc = 0xFFFFFFFF;
+        DWORD crc = 0xFFFFFFFF; // standart
         for (DWORD i = 0; i < length; ++i) {
             crc ^= data[i];
             for (int j = 0; j < 8; ++j) {
                 if (crc & 1) crc = (crc >> 1) ^ 0xEDB88320;
+                // 0xEDB88320 – polynom IEEE 802.3 CRC32
+                // Uniform distribution of hashes
                 else crc >>= 1;
             }
         }
-        return ~crc;
+        return ~crc; // NOT operation
     }
 
-    // Оновлення контрольної суми CRC32 у файлі 
     void UpdateIntegrity(HANDLE hFile) {
         DWORD fileSize = GetFileSize(hFile, NULL); // file size
-        if (fileSize == INVALID_FILE_SIZE || fileSize < sizeof(MailboxHeader) || fileSize > MAX_BOX_BUFFER) return;
+        if (
+            fileSize == INVALID_FILE_SIZE
+            || fileSize < sizeof(MailboxHeader)
+            || fileSize > MAX_BOX_BUFFER
+        ) return;
 
         BYTE buffer[MAX_BOX_BUFFER] = { 0 };
         
-        SetFilePointer(hFile, 0, NULL, FILE_BEGIN); // Позиціонування покажчика 
+        SetFilePointer(
+            hFile,
+            0,
+            NULL,
+            FILE_BEGIN
+        );
         DWORD bytesRead;
-        ReadFile(hFile, buffer, fileSize, &bytesRead, NULL); // IO 
+        ReadFile(
+            hFile,
+            buffer,
+            fileSize,
+            &bytesRead,
+            NULL
+        ); 
 
-        // Обнуляємо поле CRC перед підрахунком
+        // Reset the CRC field before counting
         MailboxHeader* header = reinterpret_cast<MailboxHeader*>(buffer);
+        // reinterpret_cast – bitwise conversion between types
         header->crc32 = 0;
 
         DWORD newCrc = CalculateCRC32(buffer, fileSize);
         
-        // Записуємо нове значення CRC назад у файл за потрібним зміщенням 
-        SetFilePointer(hFile, offsetof(MailboxHeader, crc32), NULL, FILE_BEGIN);
+        // Write the new CRC value back to the file at the desired offset
+        SetFilePointer(
+            hFile, // file handle (where need to change position?)
+            offsetof( // offset in bytes of crc32 of MailboxHeader
+                MailboxHeader,
+                crc32
+            ), // how many bytes the pointer needs to be moved?
+            NULL, // requierd for files > 4Gb
+                  // NULL – 64-bit shift is not needed
+            FILE_BEGIN // countdown starts from the ending of the file
+        ); // set pointer to start
         DWORD bytesWritten;
-        WriteFile(hFile, &newCrc, sizeof(DWORD), &bytesWritten, NULL);
+        WriteFile(
+            hFile, // a handle to the file
+            &newCrc, // where to read the data from?
+            sizeof(DWORD), // how many bytes needs to be written?
+            &bytesWritten, // where to write the number of written bytes?
+            NULL // if the file was opened without FILE_FLAG_OVERLAPPED must be NULL
+        );
     }
 
 public:
@@ -105,30 +136,40 @@ public:
         return true;
     }
 
-    // Контроль цілісності за допомогою CRC 
     bool CheckIntegrity() {
+        // Open the file
         HANDLE hFile = CreateFileA(
-            file_path.c_str(),
-            GENERIC_READ,
-            FILE_SHARE_READ,
-            NULL,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL
+            file_path.c_str(), // file path
+            GENERIC_READ, // file opening mode (read)
+            FILE_SHARE_READ, // sharing mode (read)
+                // Other processes can read the file at the same time
+            NULL, // the handle cannot be inherited (default)
+            OPEN_EXISTING, // opens the file only if it exists
+                // If the file doesn't exist ==> error
+            FILE_ATTRIBUTE_NORMAL, // the file doesn't have other attributes set
+            NULL // don't ignore parameter 6 (FILE_ATTRIBUTE_NORMAL)
         );
 
         if (hFile == INVALID_HANDLE_VALUE) return false;
 
+        // Size check
         DWORD fileSize = GetFileSize(hFile, NULL);
         if (fileSize > MAX_BOX_BUFFER) {
-            CloseHandle(hFile);
+            CloseHandle(hFile); // close file, deallocate memory
             return false;
         }
 
+        // Read data from file to buffer
         BYTE buffer[MAX_BOX_BUFFER] = { 0 };
         DWORD bytesRead;
-        ReadFile(hFile, buffer, fileSize, &bytesRead, NULL);
-        CloseHandle(hFile);
+        ReadFile(
+            hFile, // where to read data from?
+            buffer, // where to write the read data?
+            fileSize, // buffer size (how many bytes needs to be read?)
+            &bytesRead, // where to record the number of characters read?
+            NULL // synchronous mode
+        );
+        CloseHandle(hFile); // close file, deallocate memory
 
         MailboxHeader* header = reinterpret_cast<MailboxHeader*>(buffer);
         DWORD originalCrc = header->crc32;
