@@ -5,7 +5,7 @@
 using std::cout;
 using std::wstring;
 
-bool RunTaskProc(const wstring& applicationPath, int runNumber) {
+bool RunTaskProc(const wstring& applicationPath, unsigned int runNumber) {
     cout << "\nRun " << runNumber << "\n";
 
     STARTUPINFOW si;
