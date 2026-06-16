@@ -12,13 +12,18 @@ struct ThreadParams {
     unsigned int role; // 1 – writer, 2 – reader
 };
 
+constexpr unsigned int TOTAL_PHILOSOPHERS = 3;
+HANDLE forks[TOTAL_PHILOSOPHERS]; // each fork is a mutex
+
 std::vector<string> newsList; 
 CRITICAL_SECTION NewsCS; // list synchronization
 CRITICAL_SECTION ConsoleCS; // synchronizing output to console
 
 unsigned long WINAPI ThreadProc(void*);
+unsigned long WINAPI PhilosopherThreadProc(void*);
 void WriterThreadProc(unsigned int);
 void ReaderThreadProc(unsigned int);
+void logMessage(const string&);
 
 int main() {
     InitializeCriticalSection(&NewsCS);
@@ -69,8 +74,54 @@ int main() {
     for (const HANDLE& h : threads) CloseHandle(h);
     threads.clear();
     DeleteCriticalSection(&NewsCS);
-    DeleteCriticalSection(&ConsoleCS);
 
+    cout << "\n\n";
+
+    // Create mutexes-forks
+    for (unsigned int i = 0; i < TOTAL_PHILOSOPHERS; i++) {
+        forks[i] = CreateMutex(
+            NULL, // secure attributes
+                  // NULL – the handle cannot be inherited by child processes
+            FALSE, // the calling thread doesn't obtain ownership of the mutex
+            NULL // the name of the mutex object
+                 // NULL – the mutex object is created without a name
+        );
+    }
+
+    std::vector<HANDLE> philosophers;
+    for (unsigned int i = 1; i <= TOTAL_PHILOSOPHERS; i++) {
+        philosophers.push_back(
+            CreateThread(
+                NULL, // secure attributes
+                      // NULL – default security descriptor, the handle cannot be inherited
+                0, // the initial size of the stack (bytes)
+                PhilosopherThreadProc, // pointer to the func to be executed by the thread
+                new unsigned int(i), // pointer to a param to be passes to the thread
+                0, // the flags that control the creation of the thread
+                   // 0 – the thread runs immediately after creation
+                NULL // pointer to a variable that receives the thread ID
+                     // NULL – the thread ID is not returned
+            )
+        );
+    }
+
+    // Wait for philosophers to finish lunch
+    WaitForMultipleObjects(
+        philosophers.size(), // the number of object handles in the array (2nd param)
+        philosophers.data(), // an array of object handles
+        TRUE, // wait for all threads
+        INFINITE // wait 'til the thread ends
+    );
+
+    // Memory deallocation
+    for (const HANDLE& h : philosophers) {
+        CloseHandle(h);
+    }
+    for (unsigned int i = 0; i < TOTAL_PHILOSOPHERS; i++) {
+        CloseHandle(forks[i]);
+    }
+    philosophers.clear();
+    DeleteCriticalSection(&ConsoleCS);
     return 0;
 }
 
@@ -85,6 +136,42 @@ unsigned long WINAPI ThreadProc(void* lpParam) {
         WriterThreadProc(id);
     } else if (role == 2) {
         ReaderThreadProc(id);
+    }
+    return 0;
+}
+
+unsigned long WINAPI PhilosopherThreadProc(void* lpParam) {
+    unsigned int id = *static_cast<unsigned int*>(lpParam);
+    delete static_cast<unsigned int*>(lpParam);
+
+    unsigned int firstFork = id - 1;
+    unsigned int secondFork = id % TOTAL_PHILOSOPHERS;
+
+    // Preventing races and deadlocks
+    // The last philosopher changes the order of raising the forks.
+    if (id == TOTAL_PHILOSOPHERS) {
+        std::swap(firstFork, secondFork);
+    }
+
+    for (unsigned int i = 0; i < 1; i++) {
+        logMessage("Philosopher " + to_string(id) + " thinks.");
+        
+        WaitForSingleObject(forks[firstFork], INFINITE);
+        logMessage("Philosopher " + to_string(id) + " took the first fork");
+        
+        WaitForSingleObject(forks[secondFork], INFINITE);
+        logMessage("Philosopher " + to_string(id) + " took the second fork");
+        
+        // Having lunch
+        Sleep(2000);
+        
+        ReleaseMutex(forks[secondFork]);
+        logMessage("Philosopher " + to_string(id) + " put down the second fork");
+        
+        ReleaseMutex(forks[firstFork]);
+        logMessage("Philosopher " + to_string(id) + " put down the first fork");
+
+        logMessage("Philosopher " + to_string(id) + " finished his lunch");
     }
     return 0;
 }
@@ -119,4 +206,10 @@ void ReaderThreadProc(unsigned int id) {
         LeaveCriticalSection(&ConsoleCS); // unlock console
         LeaveCriticalSection(&NewsCS); // unlock NewsCS
     }
+}
+
+void logMessage(const string& message) {
+    EnterCriticalSection(&ConsoleCS);
+    cout << message << std::endl;
+    LeaveCriticalSection(&ConsoleCS);
 }
