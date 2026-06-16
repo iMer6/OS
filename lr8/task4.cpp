@@ -27,14 +27,14 @@ int main() {
     std::vector<HANDLE> threads;
 
     // Create 2 threads of writers
-    for (int i = 1; i <= 2; i++) {
+    for (unsigned int i = 1; i <= 2; i++) {
         threads.push_back(
             CreateThread(
                 NULL, // secure attributes
                       // NULL – default security descriptor, the handle cannot be inherited
                 0, // the initial size of the stack (bytes)
                 ThreadProc, // pointer to the func to be executed by the thread
-                new ThreadParams{(unsigned int)i, 1}, // pointer to a params to be passed to the thread
+                new ThreadParams{i, 1}, // pointer to a params to be passed to the thread
                 0, // the flags that control the creation of the thread
                    // 0 – the thread runs immediately after creation
                 NULL // pointer to a variable that receives the thread ID
@@ -43,14 +43,14 @@ int main() {
         );
     }
     // Create 3 threads of readers
-    for (int i = 1; i <= 3; i++) {
+    for (unsigned int i = 1; i <= 3; i++) {
         threads.push_back(
             CreateThread(
                 NULL, // secure attributes
                       // NULL – default security descriptor, the handle cannot be inherited
                 0, // the initial size of the stack (bytes)
                 ThreadProc, // pointer to the func to be executed by the thread
-                new ThreadParams{(unsigned int)i, 2}, // pointer to a params to be passed to the thread
+                new ThreadParams{i, 2}, // pointer to a params to be passed to the thread
                 0, // the flags that control the creation of the thread
                    // 0 – the thread runs immediately after creation
                 NULL // pointer to a variable that receives the thread ID
@@ -66,7 +66,8 @@ int main() {
         INFINITE // wait 'til the thread ends
     );
     
-    for (auto h : threads) CloseHandle(h);
+    for (const HANDLE& h : threads) CloseHandle(h);
+    threads.clear();
     DeleteCriticalSection(&NewsCS);
     DeleteCriticalSection(&ConsoleCS);
 
